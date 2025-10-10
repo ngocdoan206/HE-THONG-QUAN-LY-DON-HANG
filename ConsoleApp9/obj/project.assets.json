@@ -14,11 +14,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Admin\\source\\repos\\ConsoleApp9\\ConsoleApp9\\ConsoleApp9.csproj",
+      "projectUniqueName": "D:\\tài liệu trường\\Kỳ 3\\cslt\\HE-THONG-QUAN-LY-DON-HANG\\ConsoleApp9\\ConsoleApp9.csproj",
       "projectName": "ConsoleApp9",
-      "projectPath": "C:\\Users\\Admin\\source\\repos\\ConsoleApp9\\ConsoleApp9\\ConsoleApp9.csproj",
+      "projectPath": "D:\\tài liệu trường\\Kỳ 3\\cslt\\HE-THONG-QUAN-LY-DON-HANG\\ConsoleApp9\\ConsoleApp9.csproj",
       "packagesPath": "C:\\Users\\Admin\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Admin\\source\\repos\\ConsoleApp9\\ConsoleApp9\\obj\\",
+      "outputPath": "D:\\tài liệu trường\\Kỳ 3\\cslt\\HE-THONG-QUAN-LY-DON-HANG\\ConsoleApp9\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

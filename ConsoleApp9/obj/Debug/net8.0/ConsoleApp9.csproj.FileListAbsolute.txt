@@ -3,3 +3,18 @@ C:\Users\Admin\source\repos\ConsoleApp9\ConsoleApp9\obj\Debug\net8.0\ConsoleApp9
 C:\Users\Admin\source\repos\ConsoleApp9\ConsoleApp9\obj\Debug\net8.0\ConsoleApp9.AssemblyInfo.cs
 C:\Users\Admin\source\repos\ConsoleApp9\ConsoleApp9\obj\Debug\net8.0\ConsoleApp9.csproj.CoreCompileInputs.cache
 C:\Users\Admin\source\repos\ConsoleApp9\ConsoleApp9\obj\Debug\net8.0\ConsoleApp9.sourcelink.json
+D:\tài liệu trường\Kỳ 3\cslt\HE-THONG-QUAN-LY-DON-HANG\ConsoleApp9\bin\Debug\net8.0\ConsoleApp9.exe
+D:\tài liệu trường\Kỳ 3\cslt\HE-THONG-QUAN-LY-DON-HANG\ConsoleApp9\bin\Debug\net8.0\ConsoleApp9.deps.json
+D:\tài liệu trường\Kỳ 3\cslt\HE-THONG-QUAN-LY-DON-HANG\ConsoleApp9\bin\Debug\net8.0\ConsoleApp9.runtimeconfig.json
+D:\tài liệu trường\Kỳ 3\cslt\HE-THONG-QUAN-LY-DON-HANG\ConsoleApp9\bin\Debug\net8.0\ConsoleApp9.dll
+D:\tài liệu trường\Kỳ 3\cslt\HE-THONG-QUAN-LY-DON-HANG\ConsoleApp9\bin\Debug\net8.0\ConsoleApp9.pdb
+D:\tài liệu trường\Kỳ 3\cslt\HE-THONG-QUAN-LY-DON-HANG\ConsoleApp9\obj\Debug\net8.0\ConsoleApp9.GeneratedMSBuildEditorConfig.editorconfig
+D:\tài liệu trường\Kỳ 3\cslt\HE-THONG-QUAN-LY-DON-HANG\ConsoleApp9\obj\Debug\net8.0\ConsoleApp9.AssemblyInfoInputs.cache
+D:\tài liệu trường\Kỳ 3\cslt\HE-THONG-QUAN-LY-DON-HANG\ConsoleApp9\obj\Debug\net8.0\ConsoleApp9.AssemblyInfo.cs
+D:\tài liệu trường\Kỳ 3\cslt\HE-THONG-QUAN-LY-DON-HANG\ConsoleApp9\obj\Debug\net8.0\ConsoleApp9.csproj.CoreCompileInputs.cache
+D:\tài liệu trường\Kỳ 3\cslt\HE-THONG-QUAN-LY-DON-HANG\ConsoleApp9\obj\Debug\net8.0\ConsoleApp9.sourcelink.json
+D:\tài liệu trường\Kỳ 3\cslt\HE-THONG-QUAN-LY-DON-HANG\ConsoleApp9\obj\Debug\net8.0\ConsoleApp9.dll
+D:\tài liệu trường\Kỳ 3\cslt\HE-THONG-QUAN-LY-DON-HANG\ConsoleApp9\obj\Debug\net8.0\refint\ConsoleApp9.dll
+D:\tài liệu trường\Kỳ 3\cslt\HE-THONG-QUAN-LY-DON-HANG\ConsoleApp9\obj\Debug\net8.0\ConsoleApp9.pdb
+D:\tài liệu trường\Kỳ 3\cslt\HE-THONG-QUAN-LY-DON-HANG\ConsoleApp9\obj\Debug\net8.0\ConsoleApp9.genruntimeconfig.cache
+D:\tài liệu trường\Kỳ 3\cslt\HE-THONG-QUAN-LY-DON-HANG\ConsoleApp9\obj\Debug\net8.0\ref\ConsoleApp9.dll
