@@ -224,7 +224,7 @@ namespace DeTaiQLDH
                 case 1:
                     Console.WriteLine("Nhập ID đơn hàng cần tìm: ");
                     if (int.TryParse(Console.ReadLine(), out int id))
-                    ketQua = ListDonHang.Where(dh => dh.ID == id).ToList();
+                        ketQua = ListDonHang.Where(dh => dh.ID == id).ToList();
                     break;
                 case 2:
                     Console.Write("Nhập tên khách hàng cần tìm: ");
@@ -234,7 +234,7 @@ namespace DeTaiQLDH
                         .ToList();
                     break;
                 case 3:
-                     Console.Write("Nhập tên món ăn cần tìm: ");
+                    Console.Write("Nhập tên món ăn cần tìm: ");
                     string mon = Console.ReadLine()!;
                     ketQua = ListDonHang
                         .Where(dh => dh.DanhSachMon.Any(m => m.TenMon.Contains(mon, StringComparison.OrdinalIgnoreCase)))
@@ -255,9 +255,95 @@ namespace DeTaiQLDH
                     dh.HienThiDonHang();
             }
         }
+        public void SapXepDonHang()
+        {
+            if (ListDonHang.Count == 0)
+            {
+                Console.WriteLine("\nHiện chưa có đơn hàng nào để sắp xếp.");
+                return;
+            }
+
+            Console.WriteLine("\n=== SẮP XẾP ĐƠN HÀNG ===");
+            Console.WriteLine("1. Theo ID");   //(Linear Sort)
+            Console.WriteLine("2. Theo tên khách hàng");    //(Linear Sort)
+            Console.WriteLine("3. Theo tổng tiền");             // (Binary Sort)
+            Console.Write("Nhập lựa chọn: ");
+            string luaChon = Console.ReadLine()!;
+            
+            switch (luaChon)
+            {
+                case "1":
+                LinearSortByID();
+                Console.WriteLine("→ Đã sắp xếp theo ID (tăng dần).");
+                break;
+                case "2":
+                LinearSortByName();
+                Console.WriteLine("→ Đã sắp xếp theo tên khách hàng (A–Z).");
+                break;
+                case "3":
+                BinarySortByTongTien();
+                Console.WriteLine("→ Đã sắp xếp theo tổng tiền (tăng dần).");
+                break;
+                default:
+                Console.WriteLine("Lựa chọn không hợp lệ!");
+                return;
+            }
+
+                // Sau khi sắp xếp xong thì hiển thị lại danh sách
+                HienThiTatCaDonHang();
+        }
+
+//-------------------- Thuật toán Linear Sort --------------------
+        private void LinearSortByID()
+        {
+            for (int i = 0; i < ListDonHang.Count - 1; i++)
+            {
+                for (int j = i + 1; j < ListDonHang.Count; j++)
+                {
+                    if (ListDonHang[i].ID > ListDonHang[j].ID)
+                    {
+                        var temp = ListDonHang[i];
+                        ListDonHang[i] = ListDonHang[j];
+                        ListDonHang[j] = temp;
+                    }
+                }
+            }
+        }
+
+        private void LinearSortByName()
+        {
+            for (int i = 0; i < ListDonHang.Count - 1; i++)
+            {
+                for (int j = i + 1; j < ListDonHang.Count; j++)
+                {
+                    if (string.Compare(ListDonHang[i].CustomerName, ListDonHang[j].CustomerName, StringComparison.OrdinalIgnoreCase) > 0)
+                    {
+                        var temp = ListDonHang[i];
+                        ListDonHang[i] = ListDonHang[j];
+                        ListDonHang[j] = temp;
+                    }
+                }
+            }
+        }
+
+//-------------------- Thuật toán Binary Sort --------------------
+        private void BinarySortByTongTien()
+        {
+            List<DonHang> sortedList = new List<DonHang>();
+            foreach (var dh in ListDonHang)
+            {
+                int left = 0, right = sortedList.Count - 1;
+                while (left <= right)
+                {
+                    int mid = (left + right) / 2;
+                    if (dh.TongTien() < sortedList[mid].TongTien())
+                        right = mid - 1;
+                    else
+                        left = mid + 1;
+                }
+                sortedList.Insert(left, dh);
+            }
+            ListDonHang = sortedList;
+        }
     }
 }
-
-
-
-

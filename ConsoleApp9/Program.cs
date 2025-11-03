@@ -1,4 +1,4 @@
-﻿﻿using System;
+﻿﻿﻿using System;
 using System.Collections.Generic;
 using System.Text;
 namespace DeTaiQLDH
@@ -52,7 +52,10 @@ namespace DeTaiQLDH
                         Console.WriteLine("5.Tìm kiếm đơn hàng");
                         quanLyDonHang.TimKiemDonHang();
                         break;
-
+                    case 6:
+                        Console.WriteLine("6. Sắp xếp đơn hàng.");
+                        quanLyDonHang.SapXepDonHang();
+                        break;
                 }
             }
         }
