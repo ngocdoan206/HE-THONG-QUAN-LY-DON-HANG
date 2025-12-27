@@ -1,5 +1,5 @@
 ﻿﻿﻿using System;
-using System.Security.Cryptography;
+//using System.Security.Cryptography;
 using System.Text;
 
 namespace DeTaiQLDH
@@ -79,7 +79,7 @@ namespace DeTaiQLDH
             Console.WriteLine(new string(' ', padding) + horizontalLine);
             Console.WriteLine(new string(' ', padding) + $"*  {TIEU_DE}  *");
             Console.WriteLine(new string(' ', padding) + horizontalLine);
-            Console.WriteLine("                                                           Giảng viên bộ môn: Nguyễn Thành Huy");
+            Console.WriteLine("                                                           Giảng viên bộ môn: TS. Nguyễn Thành Huy");
             Console.WriteLine("                                                           Nhóm sinh viên thực hiện: Nhóm B");
             Console.WriteLine(new string(' ', padding - 15) + "╔═════════════════════════════════════════════════════════════╗");
             Console.WriteLine(new string(' ', padding - 15) + "║        =======> QUẢN LÝ ĐƠN HÀNG QUÁN ĂN <=======           ║");
@@ -88,7 +88,7 @@ namespace DeTaiQLDH
             Console.WriteLine(new string(' ', padding - 15) + "║  1. Tạo đơn hàng               ║  2. Cập nhật đơn hàng      ║");
             Console.WriteLine(new string(' ', padding - 15) + "║  3. Xóa đơn hàng               ║  4. Hiển thị đơn hàng      ║");
             Console.WriteLine(new string(' ', padding - 15) + "║  5. Tìm kiếm đơn hàng          ║  6. Sắp xếp đơn hàng       ║");
-            Console.WriteLine(new string(' ', padding - 15) + "║  7. Thống kê - Báo cáo         ║  7. Xử lý File             ║");
+            Console.WriteLine(new string(' ', padding - 15) + "║  7. Thống kê - Báo cáo         ║  8. Xử lý File             ║");
             Console.WriteLine(new string(' ', padding - 15) + "║                                                             ║");
             Console.WriteLine(new string(' ', padding - 15) + "║                 0. Thoát chương trình an toàn               ║");
             Console.WriteLine(new string(' ', padding - 15) + "║                                                             ║");
