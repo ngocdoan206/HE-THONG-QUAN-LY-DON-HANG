@@ -1,13 +1,15 @@
+using System.Reflection.Metadata;
+
 namespace DeTaiQLDH
 {
     public class DonHang
     {
         public int ID { get; set; }
         public string CustomerName { get; set; }
-        public DateTime NgayTaoDon { get; set; }
+        public DateTime NgayTaoDon { get; set; } 
         public List<MonAn> DanhSachMon { get; set; }
         public bool PhuongThucThanhToan { get; set; }
-        public string TrangThai { get; set; }
+        public TrangThaiDonHang TrangThai { get; set; }
         public DonHang()
         {
             DanhSachMon = new List<MonAn>();
@@ -16,15 +18,17 @@ namespace DeTaiQLDH
         {
             DanhSachMon.Add(mon);
         }
-
-        public decimal TongTien()
+        
+        public decimal TongTien(decimal VAT = 0.1m)
         {
-            decimal tong = 0;
-            foreach (var mon in DanhSachMon)
-            {
-                tong += mon.Gia;
-            }
-            return tong;
+                decimal tong = DanhSachMon.Sum(m => m.Gia);
+                return tong * (1 + VAT);// tính giá món + thuế VAT
+        }
+        public enum TrangThaiDonHang
+        {
+            DangXuLy,
+            HoanTat,
+            DaHuy
         }
         public void HienThiDonHang()
         {

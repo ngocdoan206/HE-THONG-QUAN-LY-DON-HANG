@@ -1,82 +1,138 @@
 using System;
 using System.Collections.Generic;
-using System.Runtime.CompilerServices;
-using Microsoft.VisualBasic.FileIO;
+using System.IO;
+using System.Linq;
+
 namespace DeTaiQLDH
 {
     public class QuanLyDonHang
     {
         private List<DonHang> ListDonHang = null;
+        private readonly string filePath = "DonHang.txt";
+        private readonly string backupPath = "DonHang.bak";
 
         //Gọi danh sách đơn hàng ra
         public QuanLyDonHang()
         {
             ListDonHang = new List<DonHang>();
+            DocFile();
         }
-        
 
-        //Tạo đơn hàng
+        private int GenerateID()
+        {
+            int max = 1;
+            if (ListDonHang != null && ListDonHang.Count > 0)
+            {
+                max = ListDonHang[0].ID;
+                foreach (DonHang dh in ListDonHang)
+                {
+                    if (max < dh.ID)
+                    {
+                        max = dh.ID;
+                    }
+                }
+                max++;
+            }
+            return max;
+        }
+
+        /// <summary>
+        /// Tạo một đơn hàng mới thông qua việc nhập thông tin khách hàng, 
+        /// Chọn món ăn và xác định hình thức thanh toán.
+        /// </summary>
+        /// <remarks>
+        /// Hàm sẽ tự động khởi tạo đối tượng <see cref="DonHang"/>, 
+        /// Hiển thị menu món ăn từ <see cref="MenuMon"/>, 
+        /// Cho phép người dùng nhập mã món muốn chọn và lưu lại đơn hàng mới vào danh sách.
+        /// </remarks>        
         public void TaoDonHang()
         {
             DonHang dh = new DonHang();
-            Console.Write("Nhập mã ID đơn hàng: "); //cái này sau sửa lại thành tự cập nhật ID sau
-            dh.ID = int.Parse(Console.ReadLine()!);// Nhận mã ID từ bàn phím
+            dh.ID = GenerateID();
 
             Console.Write("Nhập tên khách hàng: ");// Yêu cầu nhập tên khách hàng
             dh.CustomerName = Console.ReadLine()!;// Nhận tên khách hàng từ bàn phím
 
-            DateTime ngayTao = DateTime.Now;// Lưu thời gian hiện tại làm ngày tạo đơn
+            dh.NgayTaoDon = DateTime.Now;// Khởi tạo ngày tạo đơn hàng là ngày hiện tại
+
             //Gọi menu từ class MenuMonAn
             MenuMon menuMon = new MenuMon();
             menuMon.HienThiMenu(); // Hiển thị menu ra màn hình
+
             // Cho người dùng chọn món
             Console.Write("\nNhập mã món muốn chọn (ngăn bằng dấu cách): ");// yêu cầu người dùng nhập mã món ngăn bằng dấu cách
-            string input = Console.ReadLine()!;//Nhận mã món từ bàn phím
+            string input = Console.ReadLine()!;
             string[] choice = input.Split(" ");// chia chuỗi đó thành từng mã món riêng bằng dấu cách
+
             // Thêm món được chọn vào đơn hàng
             List<MonAn> danhSachMon = menuMon.LayDanhSachMon();
+
             foreach (string maMon in choice)
             {
-            MonAn mon = danhSachMon.Find (m => m.IDMon.Equals(maMon, StringComparison.OrdinalIgnoreCase));//Tìm trong danh sách xem có món nào có mã trùng với maMon không (không phân biệt hoa thường)
+                MonAn? mon = danhSachMon.FirstOrDefault(m => m.IDMon.Equals(maMon, StringComparison.OrdinalIgnoreCase));
+
+                if (mon != null)  //Kiểm tra món có tồn tại không
+                {
+                    dh.ThemMon(mon.Value);  //Thêm món vào danh sách đơn hàng
+                }
+                else
+                {
+                    Console.WriteLine($"Mã món '{maMon}' không tồn tại trong menu!");
+                }
             }
-        //Chọn hình thức thanh toán
+
+            //Chọn hình thức thanh toán
             Console.Write("Chọn hình thức thanh toán (1: Tiền mặt, 2: Chuyển khoản): ");
             string phuongThuc = Console.ReadLine()!;
             dh.PhuongThucThanhToan = phuongThuc == "2";//Nếu nhập 2 đặt PhuongThucThanhToan = true (chuyển khoản), nếu nhập 1 là false (tiền mặt)                                          
-        //Mặc định trạng thái là "Đang xử lý";
-            dh.TrangThai = "Đang xử lý";
-        //Thêm đơn hàng vào danh sách
-            ListDonHang.Add(dh);//Thêm đơn hàng vừa tạo vào danh sách quản lý
+            dh.TrangThai = DonHang.TrangThaiDonHang.DangXuLy; //Mặc định trạng thái là "Đang xử lý";
+
+            //Thêm đơn hàng vừa tạo vào danh sách quản lý
+            ListDonHang.Add(dh);
+            GhiFile();
             Console.WriteLine("\nĐơn hàng đã được tạo thành công!");
-            dh.HienThiDonHang();//in thông báo thành công và hiển thị thông tin chi tiết đơn hàng ra màn hình
+            dh.HienThiDonHang(); //in thông báo thành công và hiển thị thông tin chi tiết đơn hàng ra màn hình
         }
 
 
-        //Cập nhật đơn hàng
+        /// <summary>
+        /// Cập nhật thông tin của một đơn hàng dựa trên ID người dùng nhập.
+        /// </summary>
+        /// <remarks>
+        /// Hàm này cho phép người dùng thay đổi tên khách hàng, danh sách món hoặc trạng thái đơn hàng.  
+        /// - Có kiểm tra đầu vào hợp lệ bằng <see cref="int.TryParse(string, out int)"/>.  
+        /// - Có xác thực sự tồn tại của đơn hàng trong danh sách <see cref="ListDonHang"/>.  
+        /// - Sau khi cập nhật, hàm ghi đè lại dữ liệu vào danh sách và có thể bổ sung lưu ra file (.txt hoặc .csv).  
+        /// - Nên kết hợp với sao lưu file (.bak) để tránh mất dữ liệu khi có lỗi.
+        /// </remarks>
+        
         public void CapNhatDonHang()
         {
-            Console.Write("Nhập ID đơn hàng cần cập nhật: ");//Yêu cầu người dùng nhập vào mã đơn hàng
-            if (!int.TryParse(Console.ReadLine(), out int idCanCapNhat))//Chuyển chuỗi ng dùng nhập thành số nguyên
-                                                                        // Nếu người dùng nhập không phải là số nguyên hợp lệ, thì báo lỗi và dừng việc cập nhật đơn hàng.
+            HienThiDanhSachDonHang.HienThi(ListDonHang); //Hiển thị danh sách đơn hàng hiện có
+            Console.Write("Nhập ID đơn hàng cần cập nhật: ");
+            if (!int.TryParse(Console.ReadLine(), out int idCanCapNhat))//Chuyển chuỗi ng dùng nhập thành số nguyên, nếu người dùng nhập không phải là số nguyên hợp lệ, thì báo lỗi và dừng việc cập nhật đơn hàng.
             {
                 Console.WriteLine("ID không hợp lệ!");
                 return;
             }
+
             DonHang donHangCanSua = ListDonHang.Find(dh => dh.ID == idCanCapNhat);
-            if (donHangCanSua.ID == 0 && donHangCanSua.CustomerName == null) //Kiểm tra mã đơn hàng có bằng 0 hay tên khách hàng có bị null (chưa có giá trị) hay không
+            if (donHangCanSua == null)
             {
-                Console.WriteLine("Không tìm thấy đơn hàng!"); //Nếu điều kiện đúng in ra không tìm thấy đơn hàng và dừng việc cập nhật
+                Console.WriteLine("Không tìm thấy đơn hàng!");
                 return;
             }
-            // Nếu như đơn hàng tồn tại thì
-            Console.WriteLine($"Mã đơn hàng: {donHangCanSua.ID}");// In ra mã đơn hàng
-            Console.WriteLine($"Khách hàng: {donHangCanSua.CustomerName}");// In tên khách hàng
-            Console.WriteLine($"Ngày tạo: {donHangCanSua.NgayTaoDon}");// In ngày tạo
-            Console.WriteLine($"Trạng thái: {donHangCanSua.TrangThai}");// In trạng thái đơn hàng
-            Console.WriteLine("Danh sách món:");// In danh sách món đã tạo
 
+            // Nếu như đơn hàng tồn tại thì
+            Console.WriteLine("\n===== THÔNG TIN ĐƠN HÀNG CẦN CẬP NHẬT =====");
+            Console.WriteLine($"Mã đơn hàng: {donHangCanSua.ID}           ");// In ra mã đơn hàng
+            Console.WriteLine($"Khách hàng: {donHangCanSua.CustomerName}  ");// In tên khách hàng
+            Console.WriteLine($"Ngày tạo: {donHangCanSua.NgayTaoDon}      ");// In ngày tạo
+            Console.WriteLine($"Trạng thái: {donHangCanSua.TrangThai}     ");// In trạng thái đơn hàng
+            Console.WriteLine("Danh sách món:                             ");// In danh sách món đã tạo
             foreach (var mon in donHangCanSua.DanhSachMon)//Duyệt qua từng món ăn trong danh sách món
                 Console.WriteLine($"- {mon.TenMon} ({mon.Gia:N0} VND)");//Rồi in ra tên từng món ăn
+            Console.WriteLine("=============================================");
             Console.WriteLine("Bạn muốn cập nhật phần nào?");//Sau khi in xong danh sách món thì hỏi ng dùng muốn cập nhật phần nào
             Console.WriteLine("1. Tên khách hàng");//Cập nhật lại tên
             Console.WriteLine("2. Danh sách món");//Cập nhật lại danh sách món
@@ -98,23 +154,24 @@ namespace DeTaiQLDH
                     break;
 
                 case "2"://Cập nhật danh sách món
+                    MenuMon menuMon = new MenuMon();
+                    menuMon.HienThiMenu();
                     donHangCanSua.DanhSachMon.Clear();//Xóa toàn bộ các món cũ trong đơn hàng trước khi thêm món mới.
-                    Console.WriteLine("Nhập danh sách món mới:");
-                    int thutumon = 1;//Dùng để đánh số thứ tự món ăn. Mỗi khi thêm một món mới, thutumon sẽ tăng lên.
-                    while (true)//Đây là vòng lặp vô hạn, vì chưa biết ng dùng muốn nhập bao nhiêu món.Và nó chỉ dừng lại khi ng dùng không nhập tên món nữa (để trống và nhấn Enter).
+                    Console.Write("Nhập danh sách món mới: ");
+                    string danhSachMoi = Console.ReadLine();
+                    string[] mangMaMon = danhSachMoi.Split(" ");//Chia chuỗi danhSachMoi thành mảng các mã món riêng biệt bằng dấu cách
+                    List<MonAn> danhSachMon = menuMon.LayDanhSachMon();//Lấy danh sách món ăn hiện có từ menuMon và lưu vào biến danhSachMon
+                    foreach (string monMoi in mangMaMon)
                     {
-                        Console.Write($"Tên món {thutumon}: ");
-                        string tenMon = Console.ReadLine();//Nhận tên món ăn ng dùng nhập vào từ bàn phím.
-                        if (string.IsNullOrWhiteSpace(tenMon))
-                            break;//Kiểm tra nếu ng dùng để trống, hoặc nhập toàn khoảng trắng thì thoát khỏi vòng lặp (dừng nhập món).
-
-                        Console.Write("Giá món: ");
-                        if (!decimal.TryParse(Console.ReadLine(), out decimal giaMon))//Đọc giá món người dùng nhập, chuyển chuỗi nhập được sang decimal
-                            giaMon = 0;//Nếu người dùng nhập đúng kiểu số → giaMon nhận giá trị đó.
-                                       //Nếu người dùng nhập sai → TryParse() trả về false → giaMon = 0 (gán giá mặc định là 0 để tránh lỗi)
-
-                        donHangCanSua.DanhSachMon.Add(new MonAn("M" + thutumon.ToString("D2"), tenMon, giaMon));//Tạo một món ăn mới gồm stt, tên món, giá sau đó thêm nó vào danh sách của đơn hàng.
-                        thutumon++;
+                        MonAn? mon = danhSachMon.FirstOrDefault(m => m.IDMon.Equals(monMoi, StringComparison.OrdinalIgnoreCase));
+                        if (mon != null)  //Kiểm tra món có tồn tại không
+                        {
+                            donHangCanSua.ThemMon(mon.Value);  //Thêm món vào danh sách đơn hàng
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Mã món '{monMoi}' không tồn tại trong menu!");
+                        }
                     }
                     Console.WriteLine("Cập nhật danh sách món thành công!");//In thông báo cập nhật thành công
                     break;
@@ -126,20 +183,19 @@ namespace DeTaiQLDH
                     Console.WriteLine("3. Đang xử lý");
                     Console.Write("Chọn: ");
                     string trangthai = Console.ReadLine();//Đọc chuỗi người dùng nhập từ bàn phím và lưu vào biến status.
-                    switch (trangthai)
-                    {
+                    switch (trangthai)                    {
                         case "1":
-                            donHangCanSua.TrangThai = "Hoàn tất";
-                            break;//Nếu ng dùng nhập "1" → thay đổi trạng thái đơn hàng thành Hoàn tất.
+                            donHangCanSua.TrangThai = DonHang.TrangThaiDonHang.HoanTat;
+                            break;
                         case "2":
-                            donHangCanSua.TrangThai = "Đã hủy";
-                            break;//Nếu nhập "2" → trạng thái là Đã hủy.
+                            donHangCanSua.TrangThai = DonHang.TrangThaiDonHang.DaHuy;
+                            break;
                         case "3":
-                            donHangCanSua.TrangThai = "Đang xử lý";
-                            break;//Nếu nhập "3" → trạng thái là Đang xử lý.
+                            donHangCanSua.TrangThai = DonHang.TrangThaiDonHang.DangXuLy;
+                            break;
                         default:
                             Console.WriteLine("Lựa chọn không hợp lệ!");
-                            return;//Nếu nhập khác → in ra thông báo lỗi “Lựa chọn không hợp lệ!” và return để thoát khỏi hàm, không cập nhật gì.
+                            return;
                     }
                     Console.WriteLine("Cập nhật trạng thái thành công!");//Sau khi cập nhật hợp lệ, chương trình in thông báo xác nhận cho ng dùng.
                     break;
@@ -149,28 +205,20 @@ namespace DeTaiQLDH
                     break;
             }
             // Ghi lại thay đổi vào danh sách
-            for (int i = 0; i < ListDonHang.Count; i++)//Tìm trong danh sách xem đơn nào có cùng mã số (ID) với đơn hàng mà ng dùng vừa cập nhật.
-            {
-                if (ListDonHang[i].ID == donHangCanSua.ID)//So sánh mã của đơn hàng trong danh sách với mã của đơn vừa cập nhật. Nếu trùng, nghĩa là đây chính là đơn hàng cần thay thế trong danh sách.
-                {
-                    ListDonHang[i] = donHangCanSua;//Cập nhật dữ liệu mới vào đúng vị trí trong danh sách
-                    break;
-                }
-            }
+            GhiFile();
+            Console.WriteLine("Cập nhật đơn hàng hoàn tất!");
         }
-
 
         //Xóa đơn hàng
         public void XoaDonHang()
         {
             Console.Write("\n Nhập mã đơn hàng cần xóa: ");
             int maXoa = int.Parse(Console.ReadLine());
-
             var donCanXoa = ListDonHang.FirstOrDefault(d => d.ID == maXoa);
 
             if (donCanXoa != null)
             {
-                Console.Write($"Bạn có chắc chắn muốn xóa đơn hàng {maXoa} của {donCanXoa.CustomerName} không? (y/n): " );
+                Console.Write($"Bạn có chắc chắn muốn xóa đơn hàng {maXoa} của {donCanXoa.CustomerName} không? (y/n): ");
                 string confirm = Console.ReadLine();
 
                 if (confirm == "y")
@@ -188,9 +236,16 @@ namespace DeTaiQLDH
                 Console.WriteLine("Không tìm thấy đơn hàng");
             }
         }
-        
 
-        //Hiển thị danh sách đơn hàng
+        /// <summary>
+        /// Hiển thị toàn bộ danh sách đơn hàng hiện có trong hệ thống.
+        /// </summary>
+        /// <remarks>
+        /// Phương thức sẽ kiểm tra xem danh sách <see cref="ListDonHang"/> có rỗng hay không.  
+        /// Nếu không có đơn hàng nào, hệ thống sẽ hiển thị thông báo tương ứng.  
+        /// Nếu có, phương thức sẽ gọi hàm <see cref="HienThiDanhSachDonHang.HienThi(List{DonHang})"/> 
+        /// Để hiển thị chi tiết từng đơn hàng.
+        /// </remarks>
         public void HienThiTatCaDonHang()
         {
             if (ListDonHang.Count == 0)
@@ -198,16 +253,24 @@ namespace DeTaiQLDH
                 Console.WriteLine("\nHiện chưa có đơn hàng nào trong hệ thống.");
                 return;
             }
-            HienThiDanhSachDonHang.HienThi(ListDonHang); // Gọi phần hiển thị danh sách
+            HienThiDanhSachDonHang.HienThi(ListDonHang); //Gọi phần hiển thị danh sách
         }
 
-        //Tìm kiếm đơn hàng
+        /// <summary>
+        /// Tìm kiếm đơn hàng trong danh sách theo các tiêu chí khác nhau như:
+        /// Mã đơn hàng, tên khách hàng hoặc tên món ăn.
+        /// </summary>
+        /// <remarks>
+        /// Phương thức hiển thị menu cho người dùng lựa chọn kiểu tìm kiếm,
+        /// Sau đó lọc danh sách đơn hàng <see cref="ListDonHang"/> tương ứng.
+        /// Nếu không tìm thấy kết quả phù hợp, thông báo sẽ được hiển thị.
+        /// </remarks>
         public void TimKiemDonHang()
         {
             Console.WriteLine("===TÌM KIẾM ĐƠN HÀNG===");
             Console.WriteLine("1. Tìm kiếm theo MÃ ĐƠN HÀNG");
             Console.WriteLine("2. Tìm kiếm theo TÊN KHÁCH HÀNG");
-            Console.WriteLine("3. Tìm kiếm theo MÓN ĂN");
+            Console.WriteLine("3. Tìm kiếm theo TỔNG TIỀN");
             Console.Write("Chọn chức năng: ");
             string luachon = Console.ReadLine();
 
@@ -222,25 +285,20 @@ namespace DeTaiQLDH
             switch (luaChon)
             {
                 case 1:
-                    Console.WriteLine("Nhập ID đơn hàng cần tìm: ");
+                    Console.Write("Nhập mã ID đơn hàng cần tìm: ");
                     if (int.TryParse(Console.ReadLine(), out int id))
-                        ketQua = ListDonHang.Where(dh => dh.ID == id).ToList();
+                    ketQua = TimKiem(id);
                     break;
                 case 2:
                     Console.Write("Nhập tên khách hàng cần tìm: ");
-                    string ten = Console.ReadLine()!;
-                    ketQua = ListDonHang
-                        .Where(dh => dh.CustomerName.Contains(ten, StringComparison.OrdinalIgnoreCase))
-                        .ToList();
+                    string keyword = Console.ReadLine()!;
+                    ketQua = TimKiem(keyword);
                     break;
                 case 3:
-                    Console.Write("Nhập tên món ăn cần tìm: ");
-                    string mon = Console.ReadLine()!;
-                    ketQua = ListDonHang
-                        .Where(dh => dh.DanhSachMon.Any(m => m.TenMon.Contains(mon, StringComparison.OrdinalIgnoreCase)))
-                        .ToList();
+                    Console.Write("Nhập tổng tiền cần tìm: ");
+                    if (decimal.TryParse(Console.ReadLine(), out decimal tongtien))
+                    ketQua = TimKiem(tongtien);
                     break;
-
                 default:
                     Console.WriteLine("Lựa chọn không hợp lệ!");
                     return;
@@ -255,6 +313,63 @@ namespace DeTaiQLDH
                     dh.HienThiDonHang();
             }
         }
+
+        private List<DonHang> TimKiem(int id) //Tìm theo mã ID
+        {
+            return ListDonHang.Where(dh => dh.ID == id).ToList();
+        }
+        private List<DonHang> TimKiem(string keyword) //Tìm theo tên khách hàng
+        {
+            return ListDonHang
+                    .Where(dh => dh.CustomerName.Contains(keyword, StringComparison.OrdinalIgnoreCase)
+                        || dh.ID.ToString() == keyword)
+                    .ToList();
+        }
+
+        private List<DonHang> TimKiem(decimal tongTien) //Tìm theo tổng tiền
+        {
+            SapXepTheoTongTien(); // Sắp xếp danh sách trước
+            List<DonHang> ketQua = new List<DonHang>();
+            int left = 0, right = ListDonHang.Count - 1;
+            while (left <= right)
+            {
+                int mid = (left + right) / 2;
+                decimal midValue = ListDonHang[mid].TongTien();
+
+                if (Math.Abs(midValue - tongTien) < 0.001m) // So sánh với độ chính xác nhỏ
+                {
+                    ketQua.Add(ListDonHang[mid]);
+                    //Tìm sang hai bên xem có đơn nào cùng tiền không
+                    int  templeft = mid - 1;
+                    while (templeft >= 0 && Math.Abs(ListDonHang[templeft].TongTien() - tongTien) < 0.001m)
+                    {
+                        ketQua.Add(ListDonHang[templeft--]);
+                    }
+
+                    int tempright = mid + 1;
+                    while (tempright < ListDonHang.Count && Math.Abs(ListDonHang[tempright].TongTien() - tongTien) < 0.001m)
+                    {
+                        ketQua.Add(ListDonHang[tempright++]);
+                    }
+                    break;
+                    }
+                else if (midValue < tongTien)
+                left = mid + 1;
+                else
+                right = mid - 1;
+            }
+            return ketQua;
+        }
+
+        /// <summary>
+        /// Sắp xếp đơn hàng trong danh sách theo các tiêu chí khác nhau như:
+        /// Mã đơn hàng, tên khách hàng hoặc tổng tiền món ăn.
+        /// </summary>
+        /// <remarks>
+        /// Phương thức hiển thị menu cho người dùng lựa chọn kiểu tìm kiếm,
+        /// Sau đó lọc danh sách đơn hàng <see cref="ListDonHang"/> tương ứng.
+        /// Nếu không tìm thấy kết quả phù hợp, thông báo sẽ được hiển thị.
+        /// </remarks>
         public void SapXepDonHang()
         {
             if (ListDonHang.Count == 0)
@@ -262,88 +377,338 @@ namespace DeTaiQLDH
                 Console.WriteLine("\nHiện chưa có đơn hàng nào để sắp xếp.");
                 return;
             }
-
             Console.WriteLine("\n=== SẮP XẾP ĐƠN HÀNG ===");
-            Console.WriteLine("1. Theo ID");   //(Linear Sort)
-            Console.WriteLine("2. Theo tên khách hàng");    //(Linear Sort)
-            Console.WriteLine("3. Theo tổng tiền");             // (Binary Sort)
+            Console.WriteLine("1. Theo trạng thái đơn hàng");   //Bubble 
+            Console.WriteLine("2. Theo tên khách hàng"); //Bubble
+            Console.WriteLine("3. Theo tổng tiền"); //Insertion
             Console.Write("Nhập lựa chọn: ");
             string luaChon = Console.ReadLine()!;
-            
             switch (luaChon)
             {
                 case "1":
-                LinearSortByID();
-                Console.WriteLine("→ Đã sắp xếp theo ID (tăng dần).");
-                break;
+                    SapXepTheoTrangThai();
+                    Console.WriteLine("→ Đã sắp xếp theo ID (tăng dần).");
+                    break;
                 case "2":
-                LinearSortByName();
-                Console.WriteLine("→ Đã sắp xếp theo tên khách hàng (A–Z).");
-                break;
+                    SapXepTheoTenKH();
+                    Console.WriteLine("→ Đã sắp xếp theo tên khách hàng (A–Z).");
+                    break;
                 case "3":
-                BinarySortByTongTien();
-                Console.WriteLine("→ Đã sắp xếp theo tổng tiền (tăng dần).");
-                break;
+                    SapXepTheoTongTien();
+                    Console.WriteLine("→ Đã sắp xếp theo tổng tiền (tăng dần).");
+                    break;
                 default:
-                Console.WriteLine("Lựa chọn không hợp lệ!");
+                    Console.WriteLine("Lựa chọn không hợp lệ!");
+                    return;
+            }
+            // Sau khi sắp xếp xong thì hiển thị lại danh sách
+            HienThiTatCaDonHang();
+        }
+
+        private void SapXepTheoTrangThai()
+        {
+            for (int i = 0; i < ListDonHang.Count - 1; i++)
+            {
+                for (int j = 0; j < ListDonHang.Count - i - 1; j++)
+                {
+                    if (ListDonHang[j].TrangThai > ListDonHang[j + 1].TrangThai)
+                    {
+                        var temp = ListDonHang[j];
+                        ListDonHang[j] = ListDonHang[j + 1];
+                        ListDonHang[j + 1] = temp;
+                    }
+                }
+            }
+        }
+
+        private void SapXepTheoTenKH()
+        {
+            for (int i = 0; i < ListDonHang.Count - 1; i++)
+            {
+                for (int j = 0; j < ListDonHang.Count - i - 1; j++)
+                {
+                    if (string.Compare(ListDonHang[j].CustomerName, ListDonHang[j + 1].CustomerName, true) > 0)
+                    {
+                        var temp = ListDonHang[j];
+                        ListDonHang[j] = ListDonHang[j + 1];
+                        ListDonHang[j + 1] = temp;
+                    }
+                }
+            }
+        }
+        private void SapXepTheoTongTien()
+        {
+            for (int i = 1; i < ListDonHang.Count; i++)
+            {
+                var key = ListDonHang[i];
+                int j = i - 1;
+
+                while (j >= 0 && ListDonHang[j].TongTien() > key.TongTien())
+                {
+                    ListDonHang[j + 1] = ListDonHang[j];
+                    j--;
+                }
+                ListDonHang[j + 1] = key;
+            }
+        }
+
+        public void ThongKeBaoCao()
+        {
+            Console.WriteLine("\n===== THỐNG KÊ – BÁO CÁO ĐƠN HÀNG =====");
+            if (ListDonHang.Count == 0)
+            {
+                Console.WriteLine("Chưa có dữ liệu để thống kê!");
+                return;
+            }
+            TaoBangThongKeTrangThai();
+            Console.WriteLine("+----------BẢNG THỐNG KÊ----------+");
+            Console.WriteLine("|----------------+----------------|");
+            Console.WriteLine("|   Trạng thái   |  Số lượng đơn  |");
+            Console.WriteLine("|----------------+----------------|");
+
+            for (int i = 0; i < 3; i++)
+            {
+                string tenTrangThai = i switch
+                {
+                    0 => "Đang xử lý",
+                    1 => "Hoàn tất",
+                    2 => "Đã hủy",
+                    _ => "?"
+                };
+                Console.WriteLine($"| {tenTrangThai,-14} | {bangThongKeTrangThai[i,1],-15}|");
+                Console.WriteLine("+----------------+----------------+");
+
+            }
+            decimal tongDoanhThu = ListDonHang
+                .Where(d => d.TrangThai == DonHang.TrangThaiDonHang.HoanTat)
+                .Sum(d => d.TongTien());
+            Console.WriteLine($"Tổng số đơn hàng   : {ListDonHang.Count}");
+            Console.WriteLine($"Tổng doanh thu     : {tongDoanhThu:N0} VND");
+
+            ThongKeMonBanChay();
+        }
+
+        private void DemSoLuongTheoTrangThai(
+            out int dangXuLy,
+            out int hoanTat,
+            out int daHuy)
+        {
+            dangXuLy = 0;
+            hoanTat = 0;
+            daHuy = 0;
+            foreach (var dh in ListDonHang)
+            {
+                  switch (dh.TrangThai)
+                  {
+                        case DonHang.TrangThaiDonHang.DangXuLy:
+                            dangXuLy++;
+                            break;
+                        case DonHang.TrangThaiDonHang.HoanTat:
+                            hoanTat++;
+                            break;
+                        case DonHang.TrangThaiDonHang.DaHuy:
+                            daHuy++;
+                            break;
+                  }
+            }
+        }
+
+        private int[,] bangThongKeTrangThai = new int[3, 2]; //mảng 2 chiều có 3 hàng và 2 cột
+        private void TaoBangThongKeTrangThai()
+        {
+            int dxl, ht, dh;
+            DemSoLuongTheoTrangThai(out dxl, out ht, out dh);
+
+            bangThongKeTrangThai[0, 0] = (int)DonHang.TrangThaiDonHang.DangXuLy; ; //Vị trí hàng 1, cột 1 => Đang xử lý. Số 0 tương ứng với vị trí của enum
+            bangThongKeTrangThai[0, 1] = dxl;
+
+            bangThongKeTrangThai[1, 0] = (int)DonHang.TrangThaiDonHang.HoanTat; //Vị trí hàng 2, cột 1 => Hoàn tất
+            bangThongKeTrangThai[1, 1] = ht;
+
+            bangThongKeTrangThai[2, 0] = (int)DonHang.TrangThaiDonHang.DaHuy; //Vị trí hàng 3, cột 1 => Đã hủy
+            bangThongKeTrangThai[2, 1] = dh;
+        }
+
+        private void ThongKeMonBanChay()
+        {
+            Console.WriteLine("\n--- THỐNG KÊ MÓN BÁN CHẠY ---");
+
+            Dictionary<string, int> thongKeMon = new Dictionary<string, int>();
+
+            foreach (var dh in ListDonHang)
+            {
+                foreach (var mon in dh.DanhSachMon)
+                {
+                    if (thongKeMon.ContainsKey(mon.TenMon))
+                        thongKeMon[mon.TenMon]++;
+                    else
+                        thongKeMon[mon.TenMon] = 1;
+                }
+            }
+
+            if (thongKeMon.Count == 0)
+            {
+                Console.WriteLine("Chưa có dữ liệu món ăn.");
                 return;
             }
 
-                // Sau khi sắp xếp xong thì hiển thị lại danh sách
-                HienThiTatCaDonHang();
+            foreach (var item in thongKeMon.OrderByDescending(x => x.Value))
+            {
+                Console.WriteLine($"{item.Key,-25} : {item.Value} lần");
+            }
         }
 
-//-------------------- Thuật toán Linear Sort --------------------
-        private void LinearSortByID()
+        //XỬ LÝ FILE
+        //Ghi danh sách đơn hàng ra file
+        public void XuLyFile()
         {
-            for (int i = 0; i < ListDonHang.Count - 1; i++)
+            Console.WriteLine("\n===== XỬ LÝ FILE DỮ LIỆU =====");
+            Console.WriteLine("1. Ghi dữ liệu ra file");
+            Console.WriteLine("2. Đọc dữ liệu từ file");
+            Console.WriteLine("3. Phục hồi từ file backup");
+            Console.Write("Chọn chức năng: ");
+            string choice = Console.ReadLine()!;
+            switch (choice)
             {
-                for (int j = i + 1; j < ListDonHang.Count; j++)
+                case "1":
+                    GhiFile();
+                    break;
+                case "2":
+                    DocFile();
+                    break;
+                case "3":
+                    PhucHoiBackup();
+                    break;
+                default:
+                    Console.WriteLine("Lựa chọn không hợp lệ!");
+                    return;
+            }
+        }
+
+        private void GhiFile()
+        {
+            try
+            {
+                if (File.Exists(filePath))
                 {
-                    if (ListDonHang[i].ID > ListDonHang[j].ID)
+                    File.Copy(filePath, backupPath, true);
+                    Console.WriteLine("Đã tạo file sao lưu thành công!");
+                }
+                using (StreamWriter writer = new StreamWriter(filePath, false, System.Text.Encoding.UTF8))
+                {
+                    foreach (var dh in ListDonHang)
                     {
-                        var temp = ListDonHang[i];
-                        ListDonHang[i] = ListDonHang[j];
-                        ListDonHang[j] = temp;
+                        string danhSachMon = string.Join(";", dh.DanhSachMon.Select(m => m.TenMon));
+                        writer.WriteLine($"{dh.ID},{dh.CustomerName},{dh.NgayTaoDon},{(int)dh.TrangThai},{danhSachMon},{dh.TongTien()}");
                     }
                 }
+                Console.WriteLine("Ghi dữ liệu ra file thành công!");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                Console.WriteLine("Lỗi: Không có quyền truy cập file!");
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine($"Lỗi khi ghi file: {ex.Message}");
             }
         }
 
-        private void LinearSortByName()
+        //Đọc dữ liệu từ file khi khởi động
+        private void DocFile()
         {
-            for (int i = 0; i < ListDonHang.Count - 1; i++)
+            MenuMon menuMon = new MenuMon();
+            List<MonAn> danhSachMon = menuMon.LayDanhSachMon();
+            try //Bắt đầu khối try để bắt lỗi đọc file
             {
-                for (int j = i + 1; j < ListDonHang.Count; j++)
+                if (!File.Exists(filePath)) // Kiểm tra xem file có tồn tại không
                 {
-                    if (string.Compare(ListDonHang[i].CustomerName, ListDonHang[j].CustomerName, StringComparison.OrdinalIgnoreCase) > 0)
+                    Console.WriteLine("File dữ liệu không tồn tại. Danh sách trống."); // Thông báo nếu không có file
+                    return; // Dừng hàm
+                }
+
+                ListDonHang.Clear(); // Xóa danh sách hiện tại trước khi đọc dữ liệu mới
+                using (StreamReader reader = new StreamReader(filePath)) // Mở file để đọc
+                {
+                    string line; // Biến chứa từng dòng đọc được
+                    while ((line = reader.ReadLine()) != null) // Đọc đến khi hết file
                     {
-                        var temp = ListDonHang[i];
-                        ListDonHang[i] = ListDonHang[j];
-                        ListDonHang[j] = temp;
+                        string[] parts = line.Split(','); // Tách dòng thành các phần tử bằng dấu phẩy
+                        if (parts.Length >= 6) // Đảm bảo có đủ 6 trường dữ liệu
+                        {
+                            DonHang dh = new DonHang // Tạo đối tượng đơn hàng mới
+                            {
+                                ID = int.Parse(parts[0]),
+                                CustomerName = parts[1],
+                                NgayTaoDon = DateTime.Parse(parts[2]),
+                                TrangThai = (DonHang.TrangThaiDonHang)int.Parse(parts[3]),
+                            };
+                            dh.DanhSachMon = parts[4]
+                                .Split(';')
+                                .Select(tenMon =>
+                                {
+                                    var monKhop = danhSachMon.FirstOrDefault(m => m.TenMon.Equals(tenMon, StringComparison.OrdinalIgnoreCase));
+                                    return new MonAn
+                                    {
+                                        TenMon = tenMon,
+                                        Gia = monKhop.TenMon != null ? monKhop.Gia : 0
+                                    };
+                                })
+                                .ToList();
+                            ListDonHang.Add(dh); // Thêm đơn hàng vào danh sách
+                        }
                     }
                 }
+                Console.WriteLine("Đọc dữ liệu từ file thành công!"); //Thông báo đọc thành công
+            }
+            catch (FileNotFoundException) //Lỗi file không tồn tại
+            {
+                Console.WriteLine("Lỗi: File không tồn tại!");
+            }
+            catch (UnauthorizedAccessException) //Lỗi không có quyền đọc file
+            {
+                Console.WriteLine("Lỗi: Không có quyền đọc file!");
+            }
+            catch (FormatException) //Lỗi sai định dạng dữ liệu
+            {
+                Console.WriteLine("Lỗi: Dữ liệu trong file sai định dạng!");
+            }
+            catch (Exception ex) //Các lỗi khác
+            {
+                Console.WriteLine($"Lỗi khi đọc file: {ex.Message}");
             }
         }
 
-//-------------------- Thuật toán Binary Sort --------------------
-        private void BinarySortByTongTien()
+        //Phục hồi từ file backup (.bak)
+        private void PhucHoiBackup()
         {
-            List<DonHang> sortedList = new List<DonHang>();
-            foreach (var dh in ListDonHang)
+            try //Bắt đầu khối try để bắt lỗi phục hồi
             {
-                int left = 0, right = sortedList.Count - 1;
-                while (left <= right)
+                if (File.Exists(backupPath)) //Kiểm tra file .bak có tồn tại không
                 {
-                    int mid = (left + right) / 2;
-                    if (dh.TongTien() < sortedList[mid].TongTien())
-                        right = mid - 1;
-                    else
-                        left = mid + 1;
+                    File.Copy(backupPath, filePath, true); // Sao chép file .bak đè lên file chính
+                    Console.WriteLine("Phục hồi từ file sao lưu thành công!"); // Thông báo phục hồi thành công
                 }
-                sortedList.Insert(left, dh);
+                else
+                {
+                    Console.WriteLine("File backup không tồn tại!");
+                }
             }
-            ListDonHang = sortedList;
+            catch (UnauthorizedAccessException)
+            {
+                Console.WriteLine("Lỗi: Không có quyền truy cập file!");
+            }
+            catch (IOException ex)
+            {
+                Console.WriteLine($"Lỗi khi phục hồi file backup: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Lỗi không xác định khi phục hồi backup: {ex.Message}");
+            }
         }
     }
 }
+
+
+

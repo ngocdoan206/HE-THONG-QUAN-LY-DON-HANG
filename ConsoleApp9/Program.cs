@@ -1,63 +1,99 @@
 ﻿﻿﻿using System;
-using System.Collections.Generic;
+using System.Security.Cryptography;
 using System.Text;
+
 namespace DeTaiQLDH
 {
     public class Menu
     {
-        static void Main(string[] args)//Hàm main là điểm bắt đầu chạy chương trình
+        public const string TIEU_DE = "HỆ THỐNG QUẢN LÝ ĐƠN HÀNG";
+
+        static void Main(string[] args)
         {
-            //Cho phép code chạy được tiếng Việt không bị lỗi
             Console.OutputEncoding = Encoding.UTF8;
             Console.InputEncoding = Encoding.UTF8;
-            //Gọi các chức năng
+
             QuanLyDonHang quanLyDonHang = new QuanLyDonHang();
-            //Tạo menu
+
             while (true)
             {
-                Console.WriteLine("\nHỆ THỐNG QUẢN LÝ ĐƠN HÀNG");
-                Console.WriteLine("*************************MENU**************************");
-                Console.WriteLine("**  1. Thêm đơn hàng.                                **");
-                Console.WriteLine("**  2. Cập nhật thông tin đơn hàng theo ID.          **");
-                Console.WriteLine("**  3. Xóa đơn hàng theo ID.                         **");
-                Console.WriteLine("**  4. Hiển thị danh sách đơn hàng                   **");
-                Console.WriteLine("**  5. Tìm kiếm đơn hàng.                            **");
-                Console.WriteLine("**  6. Sắp xếp đơn hàng.                             **");
-                Console.WriteLine("**  7. Hiển thị danh sách sinh viên.                 **");
-                Console.WriteLine("**  0. Thoát.                                        **");
-                Console.WriteLine("*******************************************************");
+                MenuConsole();
+
                 Console.Write("Nhập tùy chọn: ");
-                int key = Convert.ToInt32(Console.ReadLine());
+                string input = Console.ReadLine()!;
+                if (!int.TryParse(input, out int key))
+                {
+                    Console.WriteLine("Vui lòng nhập số hợp lệ!");
+                    continue;
+                }
+
                 switch (key)
                 {
                     case 1:
-                        Console.WriteLine("1. Thêm đơn hàng.");
                         quanLyDonHang.TaoDonHang();
-                        Console.WriteLine("Thêm đơn hàng thành công!");
                         break;
                     case 2:
-                        Console.WriteLine("2. Cập nhật đơn hàng");
                         quanLyDonHang.CapNhatDonHang();
-                        Console.WriteLine("Cập nhật đơn hàng thành công");
                         break;
                     case 3:
-                        Console.WriteLine("3. Xóa đơn hàng");
                         quanLyDonHang.XoaDonHang();
                         break;
                     case 4:
-                        Console.WriteLine("4. Hiển thị danh sách đơn hàng.");
                         quanLyDonHang.HienThiTatCaDonHang();
                         break;
                     case 5:
-                        Console.WriteLine("5.Tìm kiếm đơn hàng");
                         quanLyDonHang.TimKiemDonHang();
                         break;
                     case 6:
-                        Console.WriteLine("6. Sắp xếp đơn hàng.");
                         quanLyDonHang.SapXepDonHang();
                         break;
+                    case 7:
+                        quanLyDonHang.ThongKeBaoCao();
+                        break;
+                    case 8:
+                        quanLyDonHang.XuLyFile();
+                        break;
+                    case 0:
+                        Console.WriteLine("Thoát chương trình. Tạm biệt!");
+                        return;
+                    default:
+                        Console.WriteLine("Lựa chọn không hợp lệ!");
+                        break;
                 }
+                Console.WriteLine("\nNhấn Enter để tiếp tục...");
+                Console.ReadLine();
+                Console.Clear();
             }
+        }
+
+        static void MenuConsole()
+        {
+            Console.Clear();
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            int windowWidth = Console.WindowWidth;
+            int boxWidth = TIEU_DE.Length + 6;
+            int padding = (windowWidth - boxWidth) / 2;
+            string horizontalLine = new string('*', boxWidth);
+ 
+
+            Console.WriteLine(new string(' ', padding) + horizontalLine);
+            Console.WriteLine(new string(' ', padding) + $"*  {TIEU_DE}  *");
+            Console.WriteLine(new string(' ', padding) + horizontalLine);
+            Console.WriteLine("                                                           Giảng viên bộ môn: Nguyễn Thành Huy");
+            Console.WriteLine("                                                           Nhóm sinh viên thực hiện: Nhóm B");
+            Console.WriteLine(new string(' ', padding - 15) + "╔═════════════════════════════════════════════════════════════╗");
+            Console.WriteLine(new string(' ', padding - 15) + "║        =======> QUẢN LÝ ĐƠN HÀNG QUÁN ĂN <=======           ║");
+            Console.WriteLine(new string(' ', padding - 15) + "╠═════════════════════════════════════════════════════════════╣");
+            Console.WriteLine(new string(' ', padding - 15) + "║                                                             ║");
+            Console.WriteLine(new string(' ', padding - 15) + "║  1. Tạo đơn hàng               ║  2. Cập nhật đơn hàng      ║");
+            Console.WriteLine(new string(' ', padding - 15) + "║  3. Xóa đơn hàng               ║  4. Hiển thị đơn hàng      ║");
+            Console.WriteLine(new string(' ', padding - 15) + "║  5. Tìm kiếm đơn hàng          ║  6. Sắp xếp đơn hàng       ║");
+            Console.WriteLine(new string(' ', padding - 15) + "║  7. Thống kê - Báo cáo         ║  7. Xử lý File             ║");
+            Console.WriteLine(new string(' ', padding - 15) + "║                                                             ║");
+            Console.WriteLine(new string(' ', padding - 15) + "║                 0. Thoát chương trình an toàn               ║");
+            Console.WriteLine(new string(' ', padding - 15) + "║                                                             ║");
+            Console.WriteLine(new string(' ', padding - 15) + "╚═════════════════════════════════════════════════════════════╝");
+            Console.ResetColor();
         }
     }
 }
